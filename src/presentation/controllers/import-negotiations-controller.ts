@@ -1,9 +1,14 @@
+import * as multipart from 'parse-multipart-data'
 import { Controller } from '@/presentation/controllers/controller-abstract'
 import { HttpResponse, success } from '@/presentation/helpers'
 
 import { ImportNegotiationUseCase, AddNegotiationUseCase, CheckValidNegotiationsUseCase } from '@/domain/usecases'
+import { writeFile } from 'fs/promises'
 
-type Request = { user: string, email: string }
+type Request = {
+  boundary: string
+  data: string
+}
 
 export class ImportNegotiationsController extends Controller {
   constructor (
@@ -13,11 +18,17 @@ export class ImportNegotiationsController extends Controller {
   ) { super() }
 
   override async perform (request: Request): Promise<HttpResponse> {
-    const negotiationsToImport = this.importNegotiationService.perform({ filePath: 'tmp/negociacao-2022-05-02-23-16-10.xlsx' })
-    const negotiations = await this.checkValidNegotiationsService.perform(negotiationsToImport)
-    negotiations.map(async (value): Promise<void> => {
-      await this.addNegotiationService.perform(value)
-    })
+    const { boundary, data } = request
+    const requestDecode = Buffer.from(data, 'base64')
+    const parts = multipart.parse(requestDecode, boundary)
+    if (parts[0].filename) {
+      await writeFile('tmp/' + parts[0].filename, parts[0].data)
+      const negotiationsToImport = this.importNegotiationService.perform({ filePath: 'tmp/negociacao-2022-05-02-23-16-10.xlsx' })
+      const negotiations = await this.checkValidNegotiationsService.perform(negotiationsToImport)
+      negotiations.map(async (value): Promise<void> => {
+        await this.addNegotiationService.perform(value)
+      })
+    }
 
     return success('')
   }
