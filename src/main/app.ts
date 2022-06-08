@@ -5,7 +5,7 @@ import { databaseError, environmentError, notFound } from '@/presentation/helper
 import { DatabaseConnectError, EnvironmentVariablesError, NotFoundRouteError } from '@/presentation/errors'
 
 import {
-  APIGatewayProxyEvent,
+  APIGatewayProxyEventV2,
   APIGatewayProxyResult
 } from 'aws-lambda/trigger/api-gateway-proxy'
 import { MongoDatabaseConfig, MongoHelper } from '@/infra/database'
@@ -27,7 +27,7 @@ type PrepareParamsType = {
 }
 
 export const lambdaHandler = async (
-  event: APIGatewayProxyEvent
+  event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> => {
   const { isValidVariables, isValidRoute, routeConfig, databaseConfig } = prepareParams(event)
 
@@ -58,7 +58,7 @@ export const lambdaHandler = async (
 
 const prepareParams = (event: any): PrepareParamsType => {
   const isValidVariables = testVariables()
-  const isValidRoute = ('resource' in event) && ('httpMethod' in event)
+  const isValidRoute = ('rawPath' in event) && ('method' in event.requestContext.http)
 
   const host = variables.host
   const port = variables.port
@@ -67,8 +67,8 @@ const prepareParams = (event: any): PrepareParamsType => {
   const password = variables.password
 
   const routeConfig = {
-    route: event.resource,
-    method: event.httpMethod,
+    route: event.rawPath,
+    method: event.requestContext.http.method,
     event
   }
 

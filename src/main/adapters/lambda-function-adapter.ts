@@ -1,17 +1,23 @@
 import { Controller } from '../../presentation/controllers/controller-abstract'
 
 import {
-/*   APIGatewayProxyEvent, */
+  APIGatewayProxyEventV2,
   APIGatewayProxyResult
 } from 'aws-lambda/trigger/api-gateway-proxy'
+import { MiddlewareManager } from '../config/middlewares'
+import { uploadMiddleware } from '../config/middlewares/upload-middleware'
 
 export class AdapterLambda {
   constructor (
     private readonly controller: Controller
   ) {}
 
-  async handler (event: any): Promise<APIGatewayProxyResult> {
-    const request = JSON.parse(event.body)
+  async handler (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResult> {
+    const middlewareManager = new MiddlewareManager()
+    middlewareManager.use(uploadMiddleware)
+    middlewareManager.process(event)
+    const eventProcessed = middlewareManager.getEventProcessed()
+    const request = eventProcessed.body
     const httpResponse = await this.controller.perform(request)
 
     const isValid = !!(httpResponse.statusCode >= 200 && httpResponse.statusCode <= 299)

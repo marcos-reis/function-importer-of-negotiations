@@ -1,6 +1,6 @@
 import { lambdaHandler } from './app'
-import { eventMock } from '../domain/mocks/mock-request'
+import { negotiationImport } from '../domain/mocks/mock-request'
 
-const event = eventMock
+const event = negotiationImport
 
 lambdaHandler(event).then(console.log)

@@ -3,14 +3,14 @@ import { AdapterLambda } from '@/main/adapters'
 import { makeImportNegotiationController } from '@/main/factories/controllers/negotiation'
 
 import {
-  APIGatewayProxyEvent,
+  APIGatewayProxyEventV2,
   APIGatewayProxyResult
 } from 'aws-lambda/trigger/api-gateway-proxy'
-import { Method } from 'aws-sdk/clients/lambda'
 
-type Route = { event: APIGatewayProxyEvent, route: string, method: string }
+type Route = { event: APIGatewayProxyEventV2, route: string, method: string }
 
-// type Method = 'POST' | 'GET' | 'PUT' | 'DELETE' | 'PATCH'
+type Method = string
+
 type GuardRoute = { route: string, method: Method }
 
 export const adaptRoute = async (params: Route): Promise <APIGatewayProxyResult | false> => {
@@ -27,6 +27,6 @@ export const adaptRoute = async (params: Route): Promise <APIGatewayProxyResult 
 
 const guardRoute = (params: GuardRoute): Controller | false => {
   const { route, method } = params
-  if (route === '/negotiations/proccess' && method === 'POST') return makeImportNegotiationController()
+  if (route === '/negotiations/import' && method === 'POST') return makeImportNegotiationController()
   return false
 }
