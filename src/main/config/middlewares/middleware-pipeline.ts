@@ -30,4 +30,8 @@ export class MiddlewarePipeline {
       currentMiddleware(this.data, next)
     }
   }
+
+  getData (): any {
+    return this.data
+  }
 }
